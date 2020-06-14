@@ -77,6 +77,9 @@ EGLTF::CEasyGLTF::~CEasyGLTF() {}
 bool EGLTF::CEasyGLTF::LoadGLTF_file(const std::string& filepath)
 {
 	std::vector<uint8_t> buffer;
+	
+	size_t lastPos = filepath.find_last_of('/') + 1;
+	m_path = filepath.substr(0, lastPos);
 
 	LoadFile(filepath, buffer);
 
@@ -84,8 +87,6 @@ bool EGLTF::CEasyGLTF::LoadGLTF_file(const std::string& filepath)
 	{
 		return false;
 	}
-
-	fwrite((char*) buffer.data(), buffer.size(), 1, stdout);
 
 	rapidjson::Document document;
 	document.Parse((char*) buffer.data());
@@ -116,7 +117,7 @@ bool EGLTF::CEasyGLTF::LoadGLB_memory(const std::vector<uint8_t>& buffer)
 bool EGLTF::CEasyGLTF::LoadGLB_file(const std::string& filepath)
 {
 	std::vector<uint8_t> buffer;
-	LoadFile(filepath, buffer);
+	LoadFile(m_path + filepath, buffer);
 
 	if (buffer.size() < 1)
 		return false;
@@ -128,8 +129,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 {
 	// For some weird reason, GCC still doesnt "support" this pragma. Ironically, to support this, all it needs to do is ignore it.
 	// Even llvm supports this stuff...
-
-#pragma region Asset
 
 	if (document.HasMember("asset"))
 	{
@@ -156,9 +155,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	else
 		return false; // This is the only top level field the specs actually require to be present
 
-#pragma endregion Asset
-
-#pragma region Buffers
 	if (document.HasMember("buffers") && document["buffers"].IsArray())
 	{
 		for (const auto& v : document["buffers"].GetArray())
@@ -184,7 +180,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			else
 			{
 				std::vector<uint8_t> out;
-				LoadFile(value, out);
+				LoadFile(m_path + value, out);
 				data.resize(out.size() - 1); // strip the null termination
 				memcpy_s(data.data(), data.size(), out.data(), out.size() - 1);
 			}
@@ -194,10 +190,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.buffers.push_back(buffer);
 		}
 	}
-
-#pragma endregion Buffers
-
-#pragma region BufferViews
 
 	if (document.HasMember("bufferViews") && document["bufferViews"].IsArray())
 	{
@@ -209,7 +201,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			SGLTFAsset_Prop_BufferView bv;
 
 			bv.buffer = v["buffer"].GetInt();
-			bv.byteLength = v["bufferLength"].GetInt();
+			bv.byteLength = v["byteLength"].GetInt();
 			bv.byteOffset = v["byteOffset"].GetInt();
 
 			if (v.HasMember("byteStride"))
@@ -220,10 +212,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.bufferViews.push_back(bv);
 		}
 	}
-
-#pragma endregion BufferViews
-
-#pragma region Accessors
 
 	if (document.HasMember("accessors") && document["accessors"].IsArray())
 	{
@@ -275,10 +263,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.accessors.push_back(accessor);
 		}
 	}
-
-#pragma endregion Accessors
-
-#pragma region Materials
 
 	if (document.HasMember("materials") && document["materials"].IsArray())
 	{
@@ -479,16 +463,12 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 		}
 	}
 
-#pragma endregion Materials
-
-#pragma region Textures
-
 	// Pretty sure this is needed but whatever
 	if (document.HasMember("textures") && document["textures"].IsArray())
 	{
 		for (const auto& v : document["textures"].GetArray())
 		{
-			if (!v.HasMember("source") || v.HasMember("sampler"))
+			if (!v.HasMember("source") || !v.HasMember("sampler"))
 				return false;
 
 			SGLTFAsset_Prop_Texture tex;
@@ -498,10 +478,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.textures.push_back(tex);
 		}
 	}
-
-#pragma endregion Textures
-
-#pragma region Images
 
 	if (document.HasMember("images") && document["images"].IsArray())
 	{
@@ -529,7 +505,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 				else
 				{
 					std::vector<uint8_t> out;
-					LoadFile(value, out);
+					LoadFile(m_path + value, out);
 					image.data.resize(out.size() - 1); // strip the null termination
 					memcpy_s(image.data.data(), image.data.size(), out.data(), out.size() - 1);
 				}
@@ -547,10 +523,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 		}
 	}
 
-#pragma endregion Images
-
-#pragma region Samplers
-	
 	if (document.HasMember("samplers") && document["samplers"].IsArray())
 	{
 		for (const auto& v : document["samplers"].GetArray())
@@ -567,10 +539,6 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.samplers.push_back(sampler);
 		}
 	}
-
-#pragma endregion Samplers
-
-#pragma region Meshes
 
 	if (document.HasMember("meshes") && document["meshes"].IsArray())
 	{
@@ -621,21 +589,14 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 		}
 	}
 
-#pragma endregion Meshes
-
-#pragma region Nodes
-	
 	if (document.HasMember("nodes") && document["nodes"].IsArray())
 	{
 		for (const auto& v : document["nodes"].GetArray())
 		{
 			SGLTFAsset_Prop_Node node;
 
-			if (v.HasMember("children"))
+			if (v.HasMember("children") && v["children"].IsArray())
 			{
-				if (v["children"].IsArray())
-					return false;
-
 				for (const auto& vv : v["children"].GetArray())
 					node.children.push_back(vv.GetInt());
 			}
@@ -718,7 +679,124 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 		}
 	}
 
-#pragma endregion Nodes
+	if (document.HasMember("skins") && document["skins"].IsArray())
+	{
+		for (const auto& v : document["skins"].GetArray())
+		{
+			if (!v.HasMember("inverseBindMatrices") || !v.HasMember("joints") || !v["joints"].IsArray())
+				return false;
+
+			SGLTFAsset_Prop_Skin skin;
+			skin.inverseBindMatrices = v["inverseBindMatrices"].GetInt();
+			
+			for (const auto& vv : v["joints"].GetArray())
+				skin.joints.push_back(vv.GetInt());
+
+			if (v.HasMember("skeleton"))
+				skin.skeleton = v["skeleton"].GetInt();
+
+			if (v.HasMember("name"))
+				skin.name = v["name"].GetString();
+
+			m_asset.skins.push_back(skin);
+		}
+	}
+
+	if (document.HasMember("animations") && document["animations"].IsArray())
+	{
+		for (const auto& v : document["animations"].GetArray())
+		{
+			if (!v.HasMember("channels") || !v.HasMember("samplers"))
+				return false;
+
+			SGLTFAsset_Prop_Animation anim;
+
+			for (const auto& vv : v["channels"].GetArray())
+			{
+				if (!vv.HasMember("target") || !vv.HasMember("sampler"))
+					return false;
+
+				SGLTFAsset_Prop_Animation_Channel channel;
+				SGLTFAsset_Prop_Animation_Channel_Target target;
+
+				if (!vv["target"].HasMember("path"))
+					return false;
+
+				std::string type = vv["target"]["path"].GetString();
+				EGLTFAsset_Prop_Animation_Channel_Target_Type etype;
+				
+				if (type == "translation")
+					etype = EGLTFAsset_Prop_Animation_Channel_Target_Type::TRANSLATION;
+				else if (type == "rotation")
+					etype = EGLTFAsset_Prop_Animation_Channel_Target_Type::ROTATION;
+				else if (type == "scale")
+					etype = EGLTFAsset_Prop_Animation_Channel_Target_Type::SCALE;
+				else if (type == "weights")
+					etype = EGLTFAsset_Prop_Animation_Channel_Target_Type::WEIGHTS;
+				else
+					return false;
+
+				target.path = etype;
+
+				// This target _usually_ refers to a node
+				if (vv["target"].HasMember("node"))
+					target.node = vv["target"]["node"].GetInt();
+
+				channel.target = target;
+
+				channel.sampler = vv["sampler"].GetInt();
+
+				anim.channels.push_back(channel);
+			}
+
+			for (const auto& vv : v["samplers"].GetArray())
+			{
+				if (!vv.HasMember("input") || !vv.HasMember("output") || !vv.HasMember("interpolation"))
+					return false;
+
+				SGLTFAsset_Prop_Animation_Sampler sampler;
+
+				sampler.input = vv["input"].GetInt();
+				sampler.output = vv["output"].GetInt();
+
+				std::string type = vv["interpolation"].GetString();
+				EGLTFAsset_Prop_Animation_Sampler_Type etype;
+
+				if (type == "LINEAR")
+					etype = EGLTFAsset_Prop_Animation_Sampler_Type::LINEAR;
+				else if (type == "STEP")
+					etype = EGLTFAsset_Prop_Animation_Sampler_Type::STEP;
+				else if (type == "CUBICSPLINE")
+					etype = EGLTFAsset_Prop_Animation_Sampler_Type::CUBICSPLINE;
+				else
+					return false;
+
+				sampler.interpolation = etype;
+
+				anim.samplers.push_back(sampler);
+			}
+
+			m_asset.animations.push_back(anim);
+		}
+	}
+
+	if (document.HasMember("scenes") && document["scenes"].IsArray())
+	{
+		for (const auto& v : document["scenes"].GetArray())
+		{
+			if (!v.HasMember("nodes") || !v["nodes"].IsArray())
+				return false;
+
+			SGLTFAsset_Prop_Scene scene;
+			for (const auto& vv : v["nodes"].GetArray())
+				scene.nodes.push_back(vv.GetInt());
+
+			m_asset.scenes.push_back(scene);
+		}
+	}
+
+	if (document.HasMember("scene"))
+		m_asset.scene = document["scene"].GetInt();
 
 	return true;
 }

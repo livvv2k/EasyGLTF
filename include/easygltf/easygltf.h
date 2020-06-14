@@ -180,9 +180,11 @@ namespace EGLTF
 	{
 		size_t inverseBindMatrices;
 		std::vector<size_t> joints;
+		size_t skeleton;
+		std::string name;
 	};
 
-	enum class SGLTFAsset_Prop_Animation_Channel_Target_Type
+	enum class EGLTFAsset_Prop_Animation_Channel_Target_Type
 	{
 		TRANSLATION,
 		ROTATION,
@@ -193,7 +195,7 @@ namespace EGLTF
 	struct SGLTFAsset_Prop_Animation_Channel_Target
 	{
 		size_t node;
-		SGLTFAsset_Prop_Animation_Channel_Target_Type path;
+		EGLTFAsset_Prop_Animation_Channel_Target_Type path;
 	};
 
 	struct SGLTFAsset_Prop_Animation_Channel
@@ -202,7 +204,7 @@ namespace EGLTF
 		size_t sampler;
 	};
 
-	enum class SGLTFAsset_Prop_Animation_Sampler_Type
+	enum class EGLTFAsset_Prop_Animation_Sampler_Type
 	{
 		LINEAR,
 		STEP,
@@ -213,7 +215,7 @@ namespace EGLTF
 	{
 		size_t input;
 		size_t output;
-		SGLTFAsset_Prop_Animation_Sampler_Type interpolation;
+		EGLTFAsset_Prop_Animation_Sampler_Type interpolation;
 	};
 
 	struct SGLTFAsset_Prop_Animation
