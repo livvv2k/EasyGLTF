@@ -2,3 +2,9 @@
 
 out/*
 output/*
+
+output/testprogram/*
+
+!output/testprogram/
+!output/testprogram/Monster/
+!output/testprogram/Monster/*
