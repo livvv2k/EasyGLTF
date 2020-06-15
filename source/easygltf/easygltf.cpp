@@ -23,6 +23,16 @@
 #include <fstream>
 #include <numeric>
 
+#define PRINT_PROGRESS 1
+
+#if PRINT_PROGRESS
+#define BEGIN_PARSE(x) printf("Parsing %s...\n", #x);
+#define END_PARSE(x) printf("Parsed %s...\n", #x);
+#else
+#define BEGIN_PARSE(x)
+#define END_PARSE(x)
+#endif
+
 static std::array<double, 16> MatxMat(const std::array<double, 16>& matA, const std::array<double, 16>& matB)
 {
 	std::array<double, 16> res;
@@ -116,6 +126,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	// For some weird reason, GCC still doesnt "support" this pragma. Ironically, to support this, all it needs to do is ignore it.
 	// Even llvm supports this stuff...
 
+	BEGIN_PARSE(asset)
 	if (document.HasMember("asset"))
 	{
 		SGLTFAsset_Prop_Asset asset;
@@ -140,7 +151,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	}
 	else
 		return false; // This is the only top level field the specs actually require to be present
+	END_PARSE(asset)
 
+	BEGIN_PARSE(buffers)
 	if (document.HasMember("buffers") && document["buffers"].IsArray())
 	{
 		for (const auto& v : document["buffers"].GetArray())
@@ -176,7 +189,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.buffers.push_back(buffer);
 		}
 	}
+	END_PARSE(buffers)
 
+	BEGIN_PARSE(bufferViews)
 	if (document.HasMember("bufferViews") && document["bufferViews"].IsArray())
 	{
 		for (const auto& v : document["bufferViews"].GetArray())
@@ -198,7 +213,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.bufferViews.push_back(bv);
 		}
 	}
+	END_PARSE(bufferViews)
 
+	BEGIN_PARSE(accessors)
 	if (document.HasMember("accessors") && document["accessors"].IsArray())
 	{
 		for (const auto& v : document["accessors"].GetArray())
@@ -249,7 +266,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.accessors.push_back(accessor);
 		}
 	}
+	END_PARSE(accessors)
 
+	BEGIN_PARSE(materials)
 	if (document.HasMember("materials") && document["materials"].IsArray())
 	{
 		for (const auto& v : document["materials"].GetArray())
@@ -448,7 +467,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.materials.push_back(mat);
 		}
 	}
+	END_PARSE(materials)
 
+	BEGIN_PARSE(textures)
 	// Pretty sure this is needed but whatever
 	if (document.HasMember("textures") && document["textures"].IsArray())
 	{
@@ -464,7 +485,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.textures.push_back(tex);
 		}
 	}
+	END_PARSE(textures)
 
+	BEGIN_PARSE(images)
 	if (document.HasMember("images") && document["images"].IsArray())
 	{
 		for (const auto& v : document["images"].GetArray())
@@ -508,7 +531,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.images.push_back(image);
 		}
 	}
+	END_PARSE(images)
 
+	BEGIN_PARSE(samplers)
 	if (document.HasMember("samplers") && document["samplers"].IsArray())
 	{
 		for (const auto& v : document["samplers"].GetArray())
@@ -525,7 +550,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.samplers.push_back(sampler);
 		}
 	}
+	END_PARSE(samplers)
 
+	BEGIN_PARSE(meshes)
 	if (document.HasMember("meshes") && document["meshes"].IsArray())
 	{
 		for (const auto& v : document["meshes"].GetArray())
@@ -574,7 +601,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.meshes.push_back(mesh);
 		}
 	}
+	END_PARSE(meshes)
 
+	BEGIN_PARSE(nodes)
 	if (document.HasMember("nodes") && document["nodes"].IsArray())
 	{
 		for (const auto& v : document["nodes"].GetArray())
@@ -664,7 +693,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.nodes.push_back(node);
 		}
 	}
+	END_PARSE(nodes)
 
+	BEGIN_PARSE(skins)
 	if (document.HasMember("skins") && document["skins"].IsArray())
 	{
 		for (const auto& v : document["skins"].GetArray())
@@ -687,7 +718,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.skins.push_back(skin);
 		}
 	}
+	END_PARSE(skins)
 
+	BEGIN_PARSE(animations)
 	if (document.HasMember("animations") && document["animations"].IsArray())
 	{
 		for (const auto& v : document["animations"].GetArray())
@@ -765,7 +798,9 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.animations.push_back(anim);
 		}
 	}
+	END_PARSE(animations)
 
+	BEGIN_PARSE(scenes)
 	if (document.HasMember("scenes") && document["scenes"].IsArray())
 	{
 		for (const auto& v : document["scenes"].GetArray())
@@ -780,9 +815,12 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			m_asset.scenes.push_back(scene);
 		}
 	}
+	END_PARSE(scenes)
 
+	BEGIN_PARSE(scene)
 	if (document.HasMember("scene"))
 		m_asset.scene = document["scene"].GetInt();
+	END_PARSE(scene)
 
 	return true;
 }
