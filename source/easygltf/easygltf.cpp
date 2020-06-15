@@ -160,14 +160,14 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			if (needlePos != std::string::npos)
 			{
 				data.resize(value.size() - bufferMIMEType.size());
-				memcpy_s(data.data(), data.size(), &value[bufferMIMEType.size()], data.size());
+				memcpy(data.data(), &value[bufferMIMEType.size()], data.size());
 			}
 			else
 			{
 				std::vector<uint8_t> out;
 				LoadFile(m_path + value, out);
 				data.resize(out.size() - 1); // strip the null termination
-				memcpy_s(data.data(), data.size(), out.data(), out.size() - 1);
+				memcpy(data.data(), out.data(), out.size() - 1);
 			}
 
 			buffer.data = data;
@@ -480,19 +480,19 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 				if (needlePosJpeg != std::string::npos)
 				{
 					image.data.resize(value.size() - jpegMIMEType.size());
-					memcpy_s(image.data.data(), image.data.size(), &value[jpegMIMEType.size()], image.data.size());
+					memcpy(image.data.data(), &value[jpegMIMEType.size()], image.data.size());
 				}
 				else if (needlePosPng != std::string::npos)
 				{
 					image.data.resize(value.size() - pngMIMEType.size());
-					memcpy_s(image.data.data(), image.data.size(), &value[pngMIMEType.size()], image.data.size());
+					memcpy(image.data.data(), &value[pngMIMEType.size()], image.data.size());
 				}
 				else
 				{
 					std::vector<uint8_t> out;
 					LoadFile(m_path + value, out);
 					image.data.resize(out.size() - 1); // strip the null termination
-					memcpy_s(image.data.data(), image.data.size(), out.data(), out.size() - 1);
+					memcpy(image.data.data(), out.data(), out.size() - 1);
 				}
 			}
 			else
