@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8.11)
 
 project(easygltf)
 
+set(CMAKE_CXX_STANDARD 11)
+
 set(ROOT_PATH "${easygltf_SOURCE_DIR}")
 set(HEADER_PATH "${ROOT_PATH}/include")
 set(SOURCE_PATH "${ROOT_PATH}/source")

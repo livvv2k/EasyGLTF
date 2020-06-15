@@ -1,0 +1,11 @@
+language: cpp
+
+compiler:
+  - gcc
+  - clang
+
+script:
+  - mkdir out && cd out/
+  - cmake ../
+  - make
+  - ../output/testprogram/testprogram
