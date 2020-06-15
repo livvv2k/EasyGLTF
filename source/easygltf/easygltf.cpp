@@ -47,6 +47,10 @@ static std::array<double, 16> MatxMat(const std::array<double, 16>& matA, const 
 // null terminated at eof
 static void LoadFile(const std::string& filepath, std::vector<uint8_t>& out)
 {
+#if PRINT_PROGRESS
+	printf("Loading file: %s..,\n", filepath.c_str());
+#endif
+
 	std::ifstream fh(filepath, std::ios::in | std::ios::out | std::ios::binary | std::ios::ate);
 	size_t sz = fh.tellg();
 
