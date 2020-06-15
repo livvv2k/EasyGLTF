@@ -19,6 +19,7 @@
 
 #include "rapidjson/document.h"
 
+#include <cmath>
 #include <fstream>
 #include <numeric>
 
@@ -545,7 +546,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 				meshPrimitive.indices = vv["indices"].GetInt();
 				meshPrimitive.material = vv["material"].GetInt();
 
-				for (auto& iter = vv["attributes"].MemberBegin(); iter != vv["attributes"].MemberEnd(); ++iter)
+				for (auto iter = vv["attributes"].MemberBegin(); iter != vv["attributes"].MemberEnd(); ++iter)
 					meshPrimitive.attributes.emplace(iter->name.GetString(), iter->value.GetInt());
 
 				if (vv.HasMember("targets") && vv["targets"].IsArray())
@@ -554,7 +555,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 					{
 						TGLTFAsset_Prop_Mesh_Primitive_Attributes attr;
 
-						for (auto& iter = vvv.MemberBegin(); iter != vvv.MemberEnd(); ++iter)
+						for (auto iter = vvv.MemberBegin(); iter != vvv.MemberEnd(); ++iter)
 							attr.emplace(iter->name.GetString(), iter->value.GetInt());
 
 						meshPrimitive.targets.push_back(attr);

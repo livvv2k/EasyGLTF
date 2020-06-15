@@ -36,26 +36,26 @@ namespace EGLTF
 
 	struct SGLTFAsset_Prop_Scene
 	{
-		std::vector<size_t> nodes;
+		std::vector<int32_t> nodes;
 	};
 
 	struct SGLTFAsset_Prop_Node
 	{
-		std::vector<size_t> children;
+		std::vector<int32_t> children;
 		std::array<double, 16> matrix; // this is calculated in cases where translation, rotation and scale properties are given as seperate attribs
-		size_t mesh;
-		size_t skin;
-		size_t camera;
+		int32_t mesh = -1;
+		int32_t skin = -1;
+		int32_t camera = -1;
 		std::string name;
 	};
 
-	typedef std::map<std::string, size_t> TGLTFAsset_Prop_Mesh_Primitive_Attributes;
+	typedef std::map<std::string, int32_t> TGLTFAsset_Prop_Mesh_Primitive_Attributes;
 
 	struct SGLTFAsset_Prop_Mesh_Primitive
 	{
-		size_t mode;
-		size_t indices;
-		size_t material;
+		int32_t mode = -1;
+		int32_t indices = -1;
+		int32_t material = -1;
 		TGLTFAsset_Prop_Mesh_Primitive_Attributes attributes; // the specs were not clear on what these are or how many there can be...
 		std::vector<TGLTFAsset_Prop_Mesh_Primitive_Attributes> targets;
 	};
@@ -69,33 +69,33 @@ namespace EGLTF
 
 	struct SGLTFAsset_Prop_Buffer
 	{
-		size_t byteLength;
+		int32_t byteLength = -1;
 		std::vector<uint8_t> data;
 	};
 
 	struct SGLTFAsset_Prop_BufferView
 	{
-		size_t buffer;
-		size_t byteOffset;
-		size_t byteLength;
-		size_t byteStride;
-		size_t target;
+		int32_t buffer = -1;
+		int32_t byteOffset = -1;
+		int32_t byteLength = -1;
+		int32_t byteStride = -1;
+		int32_t target = -1;
 	};
 
 	struct SGLTFAsset_Prop_Accessor_Sparse
 	{
-		size_t count;
-		size_t values; // bufferViewindex
-		std::pair<size_t, size_t> indices; // bufferView, componentType
+		int32_t count = -1;
+		int32_t values = -1; // bufferViewindex
+		std::pair<int32_t, int32_t> indices; // bufferView, componentType
 	};
 
 	struct SGLTFAsset_Prop_Accessor
 	{
-		size_t bufferView;
-		size_t byteOffset;
+		int32_t bufferView = -1;
+		int32_t byteOffset = -1;
 		std::string type;
-		size_t componentType;
-		size_t count;
+		int32_t componentType = -1;
+		int32_t count = -1;
 		std::vector<double> min;
 		std::vector<double> max;
 		SGLTFAsset_Prop_Accessor_Sparse sparse;
@@ -103,22 +103,22 @@ namespace EGLTF
 	
 	struct SGLTFAsset_Prop_Material_Texture
 	{
-		size_t index;
-		size_t texCoord; // This is the number that determines theTEXCOORD_<n>, 1 or 0. 0 is the default
+		int32_t index = -1;
+		int32_t texCoord = -1; // This is the number that determines theTEXCOORD_<n>, 1 or 0. 0 is the default
 	};
 
 	struct SGLTFAsset_Prop_Material_Texture_NT
 	{
 		double scale;
-		size_t index;
-		size_t texCoord;
+		int32_t index = -1;
+		int32_t texCoord = -1;
 	};
 
 	struct SGLTFAsset_Prop_Material_Texture_OT
 	{
 		double strength;
-		size_t index;
-		size_t texCoord;
+		int32_t index = -1;
+		int32_t texCoord = -1;
 	};
 
 	// GLTF uses the Metallic-Roughness Model from Physically-based rendering
@@ -143,8 +143,8 @@ namespace EGLTF
 
 	struct SGLTFAsset_Prop_Texture
 	{
-		size_t source;
-		size_t sampler;
+		int32_t source = -1;
+		int32_t sampler = -1;
 	};
 
 	enum class SGLTFAsset_Prop_Camera_Type
@@ -156,7 +156,7 @@ namespace EGLTF
 	struct SGLTFAsset_Prop_Camera
 	{
 		SGLTFAsset_Prop_Camera_Type type;
-		size_t zfar;
+		int32_t zfar = -1;
 		double znear;
 
 		// TODO: std::optional
@@ -172,15 +172,15 @@ namespace EGLTF
 	{
 		std::vector<uint8_t> data;
 		// Or
-		size_t bufferView;
+		int32_t bufferView = -1;
 		std::string mimeType;
 	};
 
 	struct SGLTFAsset_Prop_Skin
 	{
-		size_t inverseBindMatrices;
-		std::vector<size_t> joints;
-		size_t skeleton;
+		int32_t inverseBindMatrices = -1;
+		std::vector<int32_t> joints;
+		int32_t skeleton = -1;
 		std::string name;
 	};
 
@@ -194,14 +194,14 @@ namespace EGLTF
 
 	struct SGLTFAsset_Prop_Animation_Channel_Target
 	{
-		size_t node;
+		int32_t node = -1;
 		EGLTFAsset_Prop_Animation_Channel_Target_Type path;
 	};
 
 	struct SGLTFAsset_Prop_Animation_Channel
 	{
 		SGLTFAsset_Prop_Animation_Channel_Target target;
-		size_t sampler;
+		int32_t sampler = -1;
 	};
 
 	enum class EGLTFAsset_Prop_Animation_Sampler_Type
@@ -213,8 +213,8 @@ namespace EGLTF
 
 	struct SGLTFAsset_Prop_Animation_Sampler
 	{
-		size_t input;
-		size_t output;
+		int32_t input = -1;
+		int32_t output = -1;
 		EGLTFAsset_Prop_Animation_Sampler_Type interpolation;
 	};
 
@@ -227,10 +227,10 @@ namespace EGLTF
 
 	struct SGLTFAsset_Prop_Sampler
 	{
-		size_t magFiler;
-		size_t minFiler;
-		size_t wrapS;
-		size_t wrapT;
+		int32_t magFiler = -1;
+		int32_t minFiler = -1;
+		int32_t wrapS = -1;
+		int32_t wrapT = -1;
 	};
 
 	struct SGLTFAsset
