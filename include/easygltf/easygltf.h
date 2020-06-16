@@ -17,12 +17,27 @@
 
 #pragma once
 
-#include "rapidjson/fwd.h"
-
 #include <string>
 #include <vector>
 #include <array>
 #include <map>
+
+// rapidjson forward declarations needed.
+// The fwd.h file provided is not being used because thats an additional library header having to be bundled and most of whats in there is useless to this header
+namespace rapidjson
+{
+	template<typename CharType> struct UTF8;
+
+	class CrtAllocator;
+
+	template <typename BaseAllocator>
+	class MemoryPoolAllocator;
+
+	template <typename Encoding, typename Allocator, typename StackAllocator>
+	class GenericDocument;
+
+	typedef GenericDocument<UTF8<char>, MemoryPoolAllocator<CrtAllocator>, CrtAllocator> Document;
+}
 
 namespace EGLTF
 {
