@@ -18,7 +18,9 @@
 #include "easygltf.h"
 
 #include "rapidjson/document.h"
+#include "rapidjson/error/en.h"
 
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <numeric>
@@ -68,6 +70,10 @@ static void LoadFile(const std::string& filepath, std::vector<uint8_t>& out)
 	fh.read((char*) out.data(), sz);
 
 	fh.close();
+
+#if PRINT_PROGRESS
+	printf("Loaded file: %s...\n", filepath.c_str());
+#endif
 }
 
 EGLTF::CEasyGLTF::CEasyGLTF() {}
@@ -92,7 +98,13 @@ bool EGLTF::CEasyGLTF::LoadGLTF_file(const std::string& filepath)
 	document.Parse((char*) buffer.data());
 
 	if (document.HasParseError())
+	{
+		fprintf(stderr, "\nError(offset %u): %s\n",
+			(unsigned)document.GetErrorOffset(),
+			rapidjson::GetParseError_En(document.GetParseError()));
+
 		return false;
+	}
 
 	return ParseGLTF(document);
 }
@@ -104,7 +116,13 @@ bool EGLTF::CEasyGLTF::LoadGLTF_memory(const std::vector<uint8_t>& buffer)
 	document.Parse((char*)buffer.data());
 
 	if (document.HasParseError())
+	{
+		fprintf(stderr, "\nError(offset %u): %s\n",
+			(unsigned)document.GetErrorOffset(),
+			rapidjson::GetParseError_En(document.GetParseError()));
+
 		return false;
+	}
 
 	return ParseGLTF(document);
 }
@@ -162,33 +180,37 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	{
 		for (const auto& v : document["buffers"].GetArray())
 		{
-			if (!v.HasMember("byteLength") || !v.HasMember("uri"))
+			if (!v.HasMember("byteLength") || (!v.HasMember("uri") && m_binaryBuffer.size() < 1))
 				return false;
 
 			SGLTFAsset_Prop_Buffer buffer;
 
 			buffer.byteLength = v["byteLength"].GetInt();
 
-			std::vector<uint8_t> data;
-
-			std::string value = v["uri"].GetString();
-
-			static std::string bufferMIMEType = "data:application/octet-stream;base64";
-			size_t needlePos = value.find(bufferMIMEType);
-			if (needlePos != std::string::npos)
+			if (m_binaryBuffer.size() < 1)
 			{
-				data.resize(value.size() - bufferMIMEType.size());
-				memcpy(data.data(), &value[bufferMIMEType.size()], data.size());
+				std::vector<uint8_t> data;
+				std::string value = v["uri"].GetString();
+
+				static std::string bufferMIMEType = "data:application/octet-stream;base64";
+				size_t needlePos = value.find(bufferMIMEType);
+				if (needlePos != std::string::npos)
+				{
+					data.resize(value.size() - bufferMIMEType.size());
+					memcpy(data.data(), &value[bufferMIMEType.size()], data.size());
+				}
+				else
+				{
+					std::vector<uint8_t> out;
+					LoadFile(m_path + value, out);
+					data.resize(out.size() - 1); // strip the null termination
+					memcpy(data.data(), out.data(), out.size() - 1);
+				}
+
+				buffer.data = data;
 			}
 			else
-			{
-				std::vector<uint8_t> out;
-				LoadFile(m_path + value, out);
-				data.resize(out.size() - 1); // strip the null termination
-				memcpy(data.data(), out.data(), out.size() - 1);
-			}
-
-			buffer.data = data;
+				buffer.data = m_binaryBuffer;
 
 			m_asset.buffers.push_back(buffer);
 		}
@@ -831,5 +853,87 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 
 bool EGLTF::CEasyGLTF::ParseGLB(const std::vector<uint8_t>& buffer)
 {
-	return true;
+	size_t offset = 0; // how much of the buffer has been traversed
+
+	SGLB_HEADER header = {};
+
+	{
+		uint32_t val;
+		size_t tsize = sizeof(uint32_t);
+
+		memcpy(&val, buffer.data() + offset, tsize);
+		header.magic = val;
+		offset += tsize;
+
+		memcpy(&val, buffer.data() + offset, tsize);
+		header.version = val;
+		offset += tsize;
+
+		memcpy(&val, buffer.data() + offset, tsize);
+		header.length = val;
+		offset += tsize;
+	}
+
+	std::vector<SGLB_CHUNK> chunks; // The first chunk would always be json
+
+	{
+		for (;;)
+		{
+			uint32_t chunkLength;
+			uint32_t chunkType;
+			size_t chunkOffset = 0;
+			size_t typeSize = sizeof(uint32_t);
+
+			if (offset + (typeSize * 2) >= buffer.size())
+				break;
+
+			// TODO: bounds check
+			memcpy(&chunkLength, buffer.data() + offset + chunkOffset, typeSize); // memcpy_s would have been nice here
+			chunkOffset += typeSize;
+
+			memcpy(&chunkType, buffer.data() + offset + chunkOffset, typeSize);
+			chunkOffset += typeSize;
+
+			// TODO: Add library support to define gltf extensions maybe?
+			// the standards explicity specify to ignore unknown extensions to the client
+			// Even if there were extensions, its guaranteed to be after the spec defined chunks
+			if (chunkType != 0x4E4F534A && chunkType != 0x004E4942)
+			{
+				offset += chunkOffset + chunkLength;
+				continue;
+			}
+
+			SGLB_CHUNK chunk;
+			chunk.chunkLength = chunkLength;
+			chunk.chunkType = chunkType;
+
+			chunk.chunkData.resize(chunkLength);
+			memcpy(chunk.chunkData.data(), buffer.data() + offset + chunkOffset, chunkLength);
+			chunkOffset += chunkLength;
+
+			offset += chunkOffset;
+
+			chunks.push_back(chunk);
+
+			if (offset + (typeSize * 2) >= buffer.size())
+				break;
+		}
+	}
+
+	if (chunks.size() >= 2)
+	{
+		m_binaryBuffer.resize(chunks[1].chunkLength);
+		m_binaryBuffer = chunks[1].chunkData;
+	}
+
+	size_t lastBrace = 0;
+	std::vector<uint8_t>::reverse_iterator rit = std::find(chunks[0].chunkData.rbegin(), chunks[0].chunkData.rend(), 0x7D);
+	if (rit != chunks[0].chunkData.rend())
+		lastBrace = std::distance(begin(chunks[0].chunkData), rit.base()) - 1;
+
+	std::vector<uint8_t> validJson(lastBrace + 2);
+	memcpy(validJson.data(), chunks[0].chunkData.data(), lastBrace + 2);
+	validJson[lastBrace + 1] = '\0';
+
+	return LoadGLTF_memory(validJson);
 }

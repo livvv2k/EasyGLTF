@@ -26,6 +26,20 @@
 
 namespace EGLTF
 {
+	struct SGLB_HEADER
+	{
+		uint32_t magic;
+		uint32_t version;
+		uint32_t length;
+	};
+
+	struct SGLB_CHUNK
+	{
+		uint32_t chunkLength;
+		uint32_t chunkType;
+		std::vector<uint8_t> chunkData;
+	};
+
 	struct SGLTFAsset_Prop_Asset
 	{
 		std::string version;
@@ -258,7 +272,6 @@ namespace EGLTF
 		CEasyGLTF();
 		~CEasyGLTF();
 
-		// Only works for gltf files with embedded data
 		bool LoadGLTF_file(const std::string& filepath);
 		bool LoadGLTF_memory(const std::vector<uint8_t>& buffer);
 
@@ -270,6 +283,9 @@ namespace EGLTF
 		bool ParseGLB(const std::vector<uint8_t>& buffer);
 
 		SGLTFAsset m_asset;
+
 		std::string m_path; // For non-embedded .gltf files, also, std::optional
+
+		std::vector<uint8_t> m_binaryBuffer; // For glb file's binary chunk, also, std::optional here as well
 	};
 }
