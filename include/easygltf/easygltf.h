@@ -293,6 +293,8 @@ namespace EGLTF
 		bool LoadGLB_memory(const std::vector<uint8_t>& buffer);
 		bool LoadGLB_file(const std::string& filepath);
 
+		const SGLTFAsset& GetAssetInstance() const { return m_asset; }
+
 	private:
 		bool ParseGLTF(const rapidjson::Document& document);
 		bool ParseGLB(const std::vector<uint8_t>& buffer);
