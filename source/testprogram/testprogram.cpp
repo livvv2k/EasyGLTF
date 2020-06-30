@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 {
 	EGLTF::CEasyGLTF* easygltf = new EGLTF::CEasyGLTF();
 
-	if (!easygltf->LoadGLB_file("Monster/glTF-Binary/Monster.glb"))
+	if (!easygltf->LoadGLTF_file("Monster/glTF-Embedded/Monster.gltf"))
 	{
 		return 1;
 	}

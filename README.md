@@ -4,7 +4,7 @@
 C++11 library for loading and parsing glTF assets.
 
 ## Dependencies
-The only dependency used is a header only library, [rapidjson](https://github.com/Tencent/rapidjson), that need not be present unless you are building the library.
+The only dependencies used are header only libraries, [rapidjson](https://github.com/Tencent/rapidjson) and a header for decoding Base64 strings, that need not be present unless you are building the library.
 
 ## Building
 ### Linux

@@ -6,6 +6,7 @@ set(INCLUDE_PATH_LIST
     ${HEADER_PATH}/easygltf
     ${SOURCE_FILE_PATH}
     ${EXTERNAL_PATH}/rapidjson/include
+    ${EXTERNAL_PATH}/base64/include
     )
 include_directories(${INCLUDE_PATH_LIST})
 

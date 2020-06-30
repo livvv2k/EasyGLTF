@@ -19,6 +19,7 @@
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
+#include "base64.h"
 
 #include <algorithm>
 #include <cmath>
@@ -192,12 +193,21 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 				std::vector<uint8_t> data;
 				std::string value = v["uri"].GetString();
 
-				static std::string bufferMIMEType = "data:application/octet-stream;base64";
+				static std::string bufferMIMEType = "data:application/octet-stream;base64,";
 				size_t needlePos = value.find(bufferMIMEType);
 				if (needlePos != std::string::npos)
 				{
-					data.resize(value.size() - bufferMIMEType.size());
-					memcpy(data.data(), &value[bufferMIMEType.size()], data.size());
+					std::vector<uint8_t> encoded_raw;
+					encoded_raw.resize(value.size() - bufferMIMEType.size());
+					memcpy(encoded_raw.data(), &value[bufferMIMEType.size()], encoded_raw.size());
+
+					std::string encoded(encoded_raw.begin(), encoded_raw.end());
+					std::string decoded;
+
+					std::string error = macaron::Base64::Decode(encoded, decoded);
+
+					std::vector<uint8_t> decodedBuffer(decoded.begin(), decoded.end());
+					data = decodedBuffer;
 				}
 				else
 				{
@@ -583,21 +593,23 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	{
 		for (const auto& v : document["meshes"].GetArray())
 		{
-			if (!v.HasMember("name") || !v.HasMember("primitives") || !v["primitives"].IsArray())
+			if (!v.HasMember("primitives") || !v["primitives"].IsArray())
 				return false;
 
 			SGLTFAsset_Prop_Mesh mesh;
 			
 			for (const auto& vv : v["primitives"].GetArray())
 			{
-				if (!vv.HasMember("mode") || !vv.HasMember("indices") || !vv.HasMember("attributes") || !vv.HasMember("material"))
+				if (!vv.HasMember("indices") || !vv.HasMember("attributes"))
 					return false;
 
 				SGLTFAsset_Prop_Mesh_Primitive meshPrimitive;
 
-				meshPrimitive.mode = vv["mode"].GetInt();
+				if (vv.HasMember("mode"))
+					meshPrimitive.mode = vv["mode"].GetInt();
 				meshPrimitive.indices = vv["indices"].GetInt();
-				meshPrimitive.material = vv["material"].GetInt();
+				if (vv.HasMember("materials"))
+					meshPrimitive.material = vv["material"].GetInt();
 
 				for (auto iter = vv["attributes"].MemberBegin(); iter != vv["attributes"].MemberEnd(); ++iter)
 					meshPrimitive.attributes.emplace(iter->name.GetString(), iter->value.GetInt());
