@@ -232,14 +232,16 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	{
 		for (const auto& v : document["bufferViews"].GetArray())
 		{
-			if (!v.HasMember("buffer") || !v.HasMember("byteOffset") || !v.HasMember("byteLength"))
+			if (!v.HasMember("buffer") || !v.HasMember("byteLength"))
 				return false;
 
 			SGLTFAsset_Prop_BufferView bv;
 
 			bv.buffer = v["buffer"].GetInt();
 			bv.byteLength = v["byteLength"].GetInt();
-			bv.byteOffset = v["byteOffset"].GetInt();
+
+			if (v.HasMember("byteOffset"))
+				bv.byteOffset = v["byteOffset"].GetInt();
 
 			if (v.HasMember("byteStride"))
 				bv.byteStride = v["byteStride"].GetInt();
@@ -256,7 +258,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	{
 		for (const auto& v : document["accessors"].GetArray())
 		{
-			if (!v.HasMember("bufferView") || !v.HasMember("type") || !v.HasMember("componentType") || !v.HasMember("count") || !v.HasMember("min") || !v.HasMember("max"))
+			if (!v.HasMember("bufferView") || !v.HasMember("type") || !v.HasMember("componentType") || !v.HasMember("count"))
 				return false;
 
 			SGLTFAsset_Prop_Accessor accessor;
@@ -266,17 +268,20 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 			accessor.count = v["count"].GetInt();
 			accessor.type = v["type"].GetString();
 			
-			if (!v["min"].IsArray() || !v["max"].IsArray())
-				return false;
-
-			for (const auto& vv : v["min"].GetArray())
+			if (v.HasMember("min") && v.HasMember("max"))
 			{
-				accessor.min.push_back(vv.GetDouble());
-			}
+				if (!v["min"].IsArray() || !v["max"].IsArray())
+					return false;
 
-			for (const auto& vv : v["max"].GetArray())
-			{
-				accessor.max.push_back(vv.GetDouble());
+				for (const auto& vv : v["min"].GetArray())
+				{
+					accessor.min.push_back(vv.GetDouble());
+				}
+
+				for (const auto& vv : v["max"].GetArray())
+				{
+					accessor.max.push_back(vv.GetDouble());
+				}
 			}
 
 			if (v.HasMember("byteOffset"))
@@ -408,16 +413,15 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 
 			if (v.HasMember("normalTexture"))
 			{
-				if (!v["normalTexture"].HasMember("scale") || !v["normalTexture"].HasMember("index"))
-					return false;
-
-				if (!v["normalTexture"]["scale"].IsDouble() || !v["normalTexture"]["index"].IsInt())
-					return false;
-
 				SGLTFAsset_Prop_Material_Texture_NT tex;
 				// Again, are these supposed to be between 0.0 and 1.0?
-				tex.scale = v["normalTexture"]["scale"].GetDouble();
-				tex.index = v["normalTexture"]["index"].GetInt();
+
+				if (v["normalTexture"].HasMember("index") && v["normalTexture"]["index"].IsInt())
+					tex.index = v["normalTexture"]["index"].GetInt();
+
+
+				if (v["normalTexture"].HasMember("scale") && v["normalTexture"]["scale"].IsDouble())
+					tex.scale = v["normalTexture"]["scale"].GetDouble();
 
 				if (v["normalTexture"].HasMember("texCoord") && v["normalTexture"]["texCoord"].IsInt())
 				{
@@ -511,12 +515,12 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 	{
 		for (const auto& v : document["textures"].GetArray())
 		{
-			if (!v.HasMember("source") || !v.HasMember("sampler"))
-				return false;
-
 			SGLTFAsset_Prop_Texture tex;
-			tex.source = v["source"].GetInt();
-			tex.sampler = v["sampler"].GetInt();
+			if (v.HasMember("source"))
+				tex.source = v["source"].GetInt();
+
+			if (v.HasMember("sampler"))
+				tex.sampler = v["sampler"].GetInt();
 
 			m_asset.textures.push_back(tex);
 		}
@@ -726,7 +730,7 @@ bool EGLTF::CEasyGLTF::ParseGLTF(const rapidjson::Document& document)
 				node.skin = v["skin"].GetInt();
 
 			if (v.HasMember("name"))
-				node.name = v["name"].GetInt();
+				node.name = v["name"].GetString();
 
 			m_asset.nodes.push_back(node);
 		}
